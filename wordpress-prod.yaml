@@ -1,0 +1,44 @@
+defaultImage: true
+  image: 
+    repository: "ranchercharts/bitnami-wordpress"
+    tag: "5.2.3-debian-9-r5"
+  mariadb: 
+    image: 
+      repository: "ranchercharts/bitnami-mariadb"
+      tag: "10.3.18-debian-9-r0"
+    enabled: true
+    db: 
+      name: "wordpress"
+      user: "wordpress"
+      password: "wordpress"
+    rootUser: 
+      password: "admin"
+    master: 
+      persistence: 
+        enabled: false
+        size: "8Gi"
+        storageClass: ""
+  wordpressUsername: "admin"
+  wordpressPassword: "admin"
+  wordpressEmail: "admin@example.com"
+  externalDatabase: 
+    host: ""
+    user: ""
+    password: ""
+    database: ""
+    port: "3306"
+  persistence: 
+    enabled: false
+    size: "10Gi"
+    storageClass: ""
+    existingClaim: ""
+  ingress: 
+    enabled: true
+    hosts: 
+      - 
+        name: "sherdock"
+  service: 
+    type: "NodePort"
+    nodePorts: 
+      http: ""
+      https: ""
