@@ -1,44 +1,137 @@
-defaultImage: true
-  image: 
-    repository: "ranchercharts/bitnami-wordpress"
-    tag: "5.2.3-debian-9-r5"
-  mariadb: 
-    image: 
-      repository: "ranchercharts/bitnami-mariadb"
-      tag: "10.3.18-debian-9-r0"
-    enabled: true
-    db: 
-      name: "wordpress"
-      user: "wordpress"
-      password: "wordpress"
-    rootUser: 
-      password: "admin"
-    master: 
-      persistence: 
-        enabled: false
-        size: "8Gi"
-        storageClass: ""
-  wordpressUsername: "admin"
-  wordpressPassword: "admin"
-  wordpressEmail: "admin@example.com"
-  externalDatabase: 
-    host: ""
-    user: ""
-    password: ""
-    database: ""
-    port: "3306"
-  persistence: 
-    enabled: false
-    size: "10Gi"
-    storageClass: ""
-    existingClaim: ""
-  ingress: 
-    enabled: true
-    hosts: 
-      - 
-        name: "sherdock"
-  service: 
-    type: "NodePort"
-    nodePorts: 
-      http: ""
-      https: ""
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "5"
+    field.cattle.io/publicEndpoints: "null"
+  creationTimestamp: null
+  generation: 1
+  labels:
+    app: wp-instance-1-p-nblhw-wordpress
+    chart: wordpress-7.3.8
+    heritage: Tiller
+    io.cattle.field/appId: wp-instance-1-p-nblhw
+    release: wp-instance-1-p-nblhw
+  name: wp-instance-1-p-nblhw-wordpress
+  selfLink: /apis/apps/v1/namespaces/wp-instance-1-p-nblhw/deployments/wp-instance-1-p-nblhw-wordpress
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: wp-instance-1-p-nblhw-wordpress
+      release: wp-instance-1-p-nblhw
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        cattle.io/timestamp: "2019-12-19T08:53:12Z"
+        field.cattle.io/ports: '[[{"containerPort":80,"dnsName":"wp-instance-1-p-nblhw-wordpress","kind":"ClusterIP","name":"http","protocol":"TCP"},{"containerPort":443,"dnsName":"wp-instance-1-p-nblhw-wordpress","kind":"ClusterIP","name":"https","protocol":"TCP"}]]'
+      creationTimestamp: null
+      labels:
+        app: wp-instance-1-p-nblhw-wordpress
+        chart: wordpress-7.3.8
+        release: wp-instance-1-p-nblhw
+    spec:
+      containers:
+      - env:
+        - name: ALLOW_EMPTY_PASSWORD
+          value: "yes"
+        - name: MARIADB_HOST
+          value: wp-instance-1-p-nblhw-mariadb
+        - name: MARIADB_PORT_NUMBER
+          value: "3306"
+        - name: WORDPRESS_BLOG_NAME
+          value: User's Blog!
+        - name: WORDPRESS_DATABASE_NAME
+          value: wordpress
+        - name: WORDPRESS_DATABASE_USER
+          value: wordpress
+        - name: WORDPRESS_EMAIL
+          value: admin@example.com
+        - name: WORDPRESS_FIRST_NAME
+          value: FirstName
+        - name: WORDPRESS_HTACCESS_OVERRIDE_NONE
+          value: "no"
+        - name: WORDPRESS_LAST_NAME
+          value: LastName
+        - name: WORDPRESS_SCHEME
+          value: http
+        - name: WORDPRESS_SKIP_INSTALL
+          value: "no"
+        - name: WORDPRESS_TABLE_PREFIX
+          value: wp_
+        - name: WORDPRESS_USERNAME
+          value: admin
+        - name: WORDPRESS_DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: mariadb-password
+              name: wp-instance-1-p-nblhw-mariadb
+              optional: false
+        - name: WORDPRESS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: wordpress-password
+              name: wp-instance-1-p-nblhw-wordpress
+              optional: false
+        image: docker.io/ranchercharts/bitnami-wordpress:5.2.3-debian-9-r5
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 6
+          httpGet:
+            path: /wp-login.php
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 120
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: wordpress
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        - containerPort: 443
+          name: https
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 6
+          httpGet:
+            path: /wp-login.php
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 300m
+            memory: 512Mi
+        securityContext:
+          capabilities: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /bitnami/wordpress
+          name: wordpress-data
+          subPath: wordpress
+      dnsPolicy: ClusterFirst
+      hostAliases:
+      - hostnames:
+        - status.localhost
+        ip: 127.0.0.1
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - emptyDir: {}
+        name: wordpress-data
+status: {}
